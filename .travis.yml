@@ -1,4 +1,7 @@
 language: go
 
+before_install:
+- gem install bosh-template
+
 go:
 - 1.12
