@@ -59,7 +59,7 @@ if $0 == __FILE__
 	if context_hash['properties'] && context_hash['properties']['bosh_containerization'] && context_hash['properties']['bosh_containerization']['consumes']
 		context_hash['properties']['bosh_containerization']['consumes'].each_pair do |name, link|
 			instances = []
-			link['instances'].each do |link_instance|
+			link['Instances'].each do |link_instance|
 				instances << Bosh::Template::Test::InstanceSpec.new(
 					address:   link_instance['address'],
 					az:        link_instance['az'],
@@ -69,7 +69,7 @@ if $0 == __FILE__
 					bootstrap: link_instance['index'] == '0',
 				)
 			end
-			links << Bosh::Template::Test::Link.new(name: name, instances: instances, properties: link['properties'])
+			links << Bosh::Template::Test::Link.new(name: name, instances: instances, properties: link['Properties'])
 		end
 	end
 	
