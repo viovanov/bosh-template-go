@@ -41,6 +41,66 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func TestBadTemplate(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	erbFile := filepath.Join(testDir(), "assets", "bad_test.erb")
+	jobSpecFile := filepath.Join(testDir(), "assets", "simple_job.MF")
+
+	erbRenderer := NewERBRenderer(
+		&EvaluationContext{},
+		&InstanceInfo{},
+		jobSpecFile)
+	outDir, err := ioutil.TempDir("", "bosh-erb-render")
+	assert.NoError(err)
+	outFile := filepath.Join(outDir, "output")
+
+	// Act
+	err = erbRenderer.Render(erbFile, outFile)
+
+	// Assert
+	assert.Error(err)
+	assert.Contains(err.Error(), "failed to render template")
+	assert.Contains(err.Error(), "thisdoesntexist")
+}
+
+func TestNoRuby(t *testing.T) {
+
+	// Arrange
+	assert := assert.New(t)
+
+	oldBinary := RubyBinary
+	RubyBinary = "thisbinaryshouldnotexistanywhere"
+	defer func() { RubyBinary = oldBinary }()
+	erbRenderer := NewERBRenderer(&EvaluationContext{}, &InstanceInfo{}, "foo")
+
+	// Act
+	err := erbRenderer.Render("foo", "deadbeef")
+
+	// Assert
+	assert.Error(err)
+	assert.Contains(err.Error(), "rendering BOSH templates requires ruby")
+	assert.Contains(err.Error(), "thisbinaryshouldnotexistanywhere")
+}
+
+func TestNoGem(t *testing.T) {
+
+	// Arrange
+	assert := assert.New(t)
+
+	oldBinary := RubyGemBinary
+	RubyGemBinary = "thisgembinaryshouldnotexistanywhere"
+	defer func() { RubyGemBinary = oldBinary }()
+	erbRenderer := NewERBRenderer(&EvaluationContext{}, &InstanceInfo{}, "foo")
+
+	// Act
+	err := erbRenderer.Render("foo", "deadbeef")
+
+	// Assert
+	assert.Error(err)
+	assert.Contains(err.Error(), "rendering BOSH templates requires the bosh-template ruby gem")
+}
+
 func TestRenderOK(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)

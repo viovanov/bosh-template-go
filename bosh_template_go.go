@@ -17,6 +17,10 @@ const (
 )
 
 var (
+	// RubyBinary is the name of the ruby binary. Can be an absolute path.
+	RubyBinary = "ruby"
+	// RubyGemBinary is the name of the ruby gem binary. Can be an absolute path.
+	RubyGemBinary               = "gem"
 	templateEvaluationContextRb = []byte(`
 require "json"
 require "erb"
@@ -206,7 +210,7 @@ func (e *ERBRenderer) Render(inputFilePath, outputFilePath string) (returnErr er
 }
 
 func run(rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath string) error {
-	cmd := exec.Command("ruby", rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath)
+	cmd := exec.Command(RubyBinary, rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath)
 	outputBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		output := string(outputBytes)
@@ -216,7 +220,7 @@ func run(rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, inst
 }
 
 func checkRubyAvailable() error {
-	_, err := exec.LookPath("ruby")
+	_, err := exec.LookPath(RubyBinary)
 	if err != nil {
 		return errors.Wrap(err, "rendering BOSH templates requires ruby, please install ruby and make sure it's in your PATH")
 	}
@@ -224,7 +228,7 @@ func checkRubyAvailable() error {
 }
 
 func checkBOSHTemplateGemAvailable() error {
-	cmd := exec.Command("gem", "list", "-i", "bosh-template")
+	cmd := exec.Command(RubyGemBinary, "list", "-i", "bosh-template")
 	outputBytes, err := cmd.CombinedOutput()
 
 	if err != nil {
