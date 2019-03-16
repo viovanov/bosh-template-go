@@ -13,6 +13,7 @@ import (
 const (
 	rbClassFileName               = "bosh_erb_renderer.rb"
 	evaluationContextJSONFileName = "evaluation_context.json"
+	instanceInfoJSONFileName      = "instance_info.json"
 )
 
 var (
@@ -23,54 +24,87 @@ require "yaml"
 require "bosh/template"
 require 'fileutils'
 
-class KubeDNSEncoder
-  def initialize(link_specs)
-    @link_specs = link_specs
-  end
-end
-
-evaluationContext = ARGV[0]
-inputFile = ARGV[1]
-outputFile = ARGV[2]
-
-
 if $0 == __FILE__
-  context_path, src_path, dst_path = *ARGV
+  context_path, spec_path, instance_path, src_path, dst_path = *ARGV
 
   puts "Context file: #{context_path}"
+  puts "Instance file: #{instance_path}"
+	puts "Spec file: #{spec_path}"
   puts "Template file: #{src_path}"
   puts "Output file: #{dst_path}"
 
+	# Load the context hash
   context_hash = JSON.load(File.read(context_path))
+	
+	# Load the job spec
+	job_spec = YAML.load_file(spec_path)
 
-  # TODO: set link specs here
-  dns_encoder = KubeDNSEncoder.new({})
+	# Load the instace info
+	instance_info = JSON.load(File.read(instance_path))
 
   # Read the erb template
   begin
 	perms = File.stat(src_path).mode
-	erb_template = ERB.new(File.read(src_path), nil, '-')
-	erb_template.filename = src_path
+    template = Bosh::Template::Test::Template.new(job_spec, src_path)
   rescue Errno::ENOENT
-	raise "failed to read template file #{src_path}"
+		raise "failed to read template file #{src_path}"
   end
 
-  # Create a BOSH evaluation context
-  evaluation_context = Bosh::Template::EvaluationContext.new(context_hash, dns_encoder)
-  # Process the Template
-  output = erb_template.result(evaluation_context.get_binding)
-  
+	# Build links
+	links = []
+	if context_hash['properties'] && context_hash['properties']['bosh_containerization'] && context_hash['properties']['bosh_containerization']['consumes']
+		context_hash['properties']['bosh_containerization']['consumes'].each_pair do |name, link|
+			instances = []
+			link['instances'].each do |link_instance|
+				instances << Bosh::Template::Test::InstanceSpec.new(
+					address:   link_instance['address'],
+					az:        link_instance['az'],
+					id:        link_instance['id'],
+					index:     link_instance['index'],
+					name:      link_instance['name'],
+					bootstrap: link_instance['index'] == '0',
+				)
+			end
+			links << Bosh::Template::Test::Link.new(name: name, instances: instances, properties: link['properties'])
+		end
+	end
+	
+	# Build instance
+	instance = Bosh::Template::Test::InstanceSpec.new(
+		address:    instance_info['address'],
+		az:         instance_info['az'],
+		bootstrap:  instance_info['index'] == '0',
+		deployment: instance_info['deployment'],
+		id:         instance_info['id'],
+		index:      instance_info['index'],
+		ip:         instance_info['ip'],
+		name:       instance_info['name'],
+		networks:   {'default' => {'ip' => instance_info['ip'],
+															 'dns_record_name' => instance_info['address'],
+															 # TODO: Do we need more, like netmask and gateway?
+															 # https://github.com/cloudfoundry/bosh-agent/blob/master/agent/applier/applyspec/v1_apply_spec_test.go
+															}},
+	)
 
+  # Process the Template
+  output = template.render(context_hash['properties'], spec: instance, consumes: links)
+  
   begin
-	# Open the output file
-	output_dir = File.dirname(dst_path)
-	FileUtils.mkdir_p(output_dir)
-	out_file = File.open(dst_path, 'w')
-	# Write results to the output file
-	out_file.write(output)
-	# Set the appropriate permissions on the output file
-	out_file.chmod(perms)
-  rescue Errno::ENOENT, Errno::EACCES => e
+		# Open the output file
+		output_dir = File.dirname(dst_path)
+		FileUtils.mkdir_p(output_dir)
+		out_file = File.open(dst_path, 'w')
+
+		# Write results to the output file
+		out_file.write(output)
+
+		# Set the appropriate permissions on the output file
+		if File.basename(File.dirname(dst_path)) == 'bin'
+			out_file.chmod(0755)
+		else
+			out_file.chmod(perms)
+		end
+	rescue Errno::ENOENT, Errno::EACCES => e
   	out_file = nil
   	raise "failed to open output file #{dst_path}: #{e}"
   ensure
@@ -83,18 +117,32 @@ end
 // EvaluationContext is the context passed to the erb renderer
 type EvaluationContext struct {
 	Properties map[string]interface{} `json:"properties"`
-	Networks   map[string]interface{} `json:"networks"`
+}
+
+// InstanceInfo represents instance group runtime information
+type InstanceInfo struct {
+	Address    string `json:"address"`
+	AZ         string `json:"az"`
+	Deployment string `json:"deployment"`
+	ID         string `json:"id"`
+	Index      string `json:"index"`
+	IP         string `json:"ip"`
+	Name       string `json:"name"`
 }
 
 // ERBRenderer represents a BOSH Job erb template renderer
 type ERBRenderer struct {
 	EvaluationContext *EvaluationContext
+	InstanceInfo      *InstanceInfo
+	JobSpecFilePath   string
 }
 
 // NewERBRenderer creates a new ERBRenderer with an EvaluationContext
-func NewERBRenderer(evaluationContext *EvaluationContext) *ERBRenderer {
+func NewERBRenderer(evaluationContext *EvaluationContext, instanceInfo *InstanceInfo, jobSpecFilePath string) *ERBRenderer {
 	return &ERBRenderer{
 		EvaluationContext: evaluationContext,
+		JobSpecFilePath:   jobSpecFilePath,
+		InstanceInfo:      instanceInfo,
 	}
 }
 
@@ -137,8 +185,19 @@ func (e *ERBRenderer) Render(inputFilePath, outputFilePath string) (returnErr er
 		return errors.Wrap(err, "failed to write the evaluation context json file")
 	}
 
+	// Marshal instance information
+	instanceInfoBytes, err := json.Marshal(e.InstanceInfo)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal instance runtime information")
+	}
+	instanceInfoJSONFilePath := filepath.Join(tmpDir, instanceInfoJSONFileName)
+	err = ioutil.WriteFile(instanceInfoJSONFilePath, instanceInfoBytes, 0600)
+	if err != nil {
+		return errors.Wrap(err, "failed to write instance runtime information json file")
+	}
+
 	// Run rendering
-	err = run(rbClassFilePath, evaluationContextJSONFilePath, inputFilePath, outputFilePath)
+	err = run(rbClassFilePath, evaluationContextJSONFilePath, e.JobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath)
 	if err != nil {
 		return errors.Wrap(err, "failed to render template")
 	}
@@ -146,8 +205,8 @@ func (e *ERBRenderer) Render(inputFilePath, outputFilePath string) (returnErr er
 	return nil
 }
 
-func run(rubyClassFilePath, evaluationContextJSONFilePath, inputFilePath, outputFilePath string) error {
-	cmd := exec.Command("ruby", rubyClassFilePath, evaluationContextJSONFilePath, inputFilePath, outputFilePath)
+func run(rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath string) error {
+	cmd := exec.Command("ruby", rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath)
 	outputBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		output := string(outputBytes)

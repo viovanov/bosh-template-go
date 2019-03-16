@@ -1,0 +1,17 @@
+---
+name: foojob
+
+templates:
+  simple_test.erb: simple_test
+
+packages:
+- foopackage
+
+consumes:
+- name: myprovider
+  type: myprovider
+
+properties:
+  foo:
+    description: "some property"
+    default: baz
