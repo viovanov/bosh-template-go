@@ -1,19 +1,19 @@
 package boshgotemplate
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 const (
 	rbClassFileName               = "bosh_erb_renderer.rb"
-	evaluationContextJSONFileName = "evaluation_context.json"
-	instanceInfoJSONFileName      = "instance_info.json"
+	evaluationContextYAMLFileName = "evaluation_context.yaml"
+	instanceInfoYAMLFileName      = "instance_info.yaml"
 )
 
 var (
@@ -22,7 +22,6 @@ var (
 	// RubyGemBinary is the name of the ruby gem binary. Can be an absolute path.
 	RubyGemBinary               = "gem"
 	templateEvaluationContextRb = []byte(`
-require "json"
 require "erb"
 require "yaml"
 require "bosh/template"
@@ -38,13 +37,13 @@ if $0 == __FILE__
   puts "Output file: #{dst_path}"
 
 	# Load the context hash
-  context_hash = JSON.load(File.read(context_path))
+  context_hash = YAML.load_file(context_path)
 	
 	# Load the job spec
 	job_spec = YAML.load_file(spec_path)
 
 	# Load the instace info
-	instance_info = JSON.load(File.read(instance_path))
+	instance_info = YAML.load_file(instance_path)
 
   # Read the erb template
   begin
@@ -120,18 +119,18 @@ end
 
 // EvaluationContext is the context passed to the erb renderer
 type EvaluationContext struct {
-	Properties map[string]interface{} `json:"properties"`
+	Properties map[string]interface{} `yaml:"properties"`
 }
 
 // InstanceInfo represents instance group runtime information
 type InstanceInfo struct {
-	Address    string `json:"address"`
-	AZ         string `json:"az"`
-	Deployment string `json:"deployment"`
-	ID         string `json:"id"`
-	Index      string `json:"index"`
-	IP         string `json:"ip"`
-	Name       string `json:"name"`
+	Address    string `yaml:"address"`
+	AZ         string `yaml:"az"`
+	Deployment string `yaml:"deployment"`
+	ID         string `yaml:"id"`
+	Index      string `yaml:"index"`
+	IP         string `yaml:"ip"`
+	Name       string `yaml:"name"`
 }
 
 // ERBRenderer represents a BOSH Job erb template renderer
@@ -179,29 +178,29 @@ func (e *ERBRenderer) Render(inputFilePath, outputFilePath string) (returnErr er
 	}
 
 	// Marshal the evaluation context
-	evalContextBytes, err := json.Marshal(e.EvaluationContext)
+	evalContextBytes, err := yaml.Marshal(e.EvaluationContext)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal the evaluation context")
 	}
-	evaluationContextJSONFilePath := filepath.Join(tmpDir, evaluationContextJSONFileName)
-	err = ioutil.WriteFile(evaluationContextJSONFilePath, evalContextBytes, 0600)
+	evaluationContextYAMLFilePath := filepath.Join(tmpDir, evaluationContextYAMLFileName)
+	err = ioutil.WriteFile(evaluationContextYAMLFilePath, evalContextBytes, 0600)
 	if err != nil {
-		return errors.Wrap(err, "failed to write the evaluation context json file")
+		return errors.Wrap(err, "failed to write the evaluation context yaml file")
 	}
 
 	// Marshal instance information
-	instanceInfoBytes, err := json.Marshal(e.InstanceInfo)
+	instanceInfoBytes, err := yaml.Marshal(e.InstanceInfo)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal instance runtime information")
 	}
-	instanceInfoJSONFilePath := filepath.Join(tmpDir, instanceInfoJSONFileName)
-	err = ioutil.WriteFile(instanceInfoJSONFilePath, instanceInfoBytes, 0600)
+	instanceInfoYAMLFilePath := filepath.Join(tmpDir, instanceInfoYAMLFileName)
+	err = ioutil.WriteFile(instanceInfoYAMLFilePath, instanceInfoBytes, 0600)
 	if err != nil {
-		return errors.Wrap(err, "failed to write instance runtime information json file")
+		return errors.Wrap(err, "failed to write instance runtime information yaml file")
 	}
 
 	// Run rendering
-	err = run(rbClassFilePath, evaluationContextJSONFilePath, e.JobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath)
+	err = run(rbClassFilePath, evaluationContextYAMLFilePath, e.JobSpecFilePath, instanceInfoYAMLFilePath, inputFilePath, outputFilePath)
 	if err != nil {
 		return errors.Wrap(err, "failed to render template")
 	}
@@ -209,8 +208,8 @@ func (e *ERBRenderer) Render(inputFilePath, outputFilePath string) (returnErr er
 	return nil
 }
 
-func run(rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath string) error {
-	cmd := exec.Command(RubyBinary, rubyClassFilePath, evaluationContextJSONFilePath, jobSpecFilePath, instanceInfoJSONFilePath, inputFilePath, outputFilePath)
+func run(rubyClassFilePath, evaluationContextYAMLFilePath, jobSpecFilePath, instanceInfoYAMLFilePath, inputFilePath, outputFilePath string) error {
+	cmd := exec.Command(RubyBinary, rubyClassFilePath, evaluationContextYAMLFilePath, jobSpecFilePath, instanceInfoYAMLFilePath, inputFilePath, outputFilePath)
 	outputBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		output := string(outputBytes)
