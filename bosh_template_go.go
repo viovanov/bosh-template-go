@@ -57,6 +57,8 @@ if $0 == __FILE__
 	links = []
 	if context_hash['properties'] && context_hash['properties']['bosh_containerization'] && context_hash['properties']['bosh_containerization']['consumes']
 		context_hash['properties']['bosh_containerization']['consumes'].each_pair do |name, link|
+			next if link['instances'].empty?
+
 			instances = []
 			link['instances'].each do |link_instance|
 				instances << Bosh::Template::Test::InstanceSpec.new(
