@@ -1,11 +1,11 @@
 ---
-name: no_properties
+name: json_evaluation
 
 packages:
 - foopackage
 
 templates:
-  no_properties.yml.erb: no_properties.yml
+  json_evaluation.erb: json_evaluation
 
 consumes:
 - name: barprovider

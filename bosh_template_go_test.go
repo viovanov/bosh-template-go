@@ -321,3 +321,28 @@ func TestWithNilContext(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal("no_properties\n", string(output))
 }
+
+func TestWithJSONEvaluation(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	erbFile := filepath.Join(testDir(), "assets", "json_evaluation.erb")
+	jobSpecFile := filepath.Join(testDir(), "assets", "json_evaluation_job.MF")
+
+	erbRenderer := NewERBRenderer(
+		&EvaluationContext{},
+		&InstanceInfo{},
+		jobSpecFile)
+	outDir, err := ioutil.TempDir("", "bosh-erb-render")
+	assert.NoError(err)
+	outFile := filepath.Join(outDir, "output")
+
+	// Act
+	err = erbRenderer.Render(erbFile, outFile)
+	assert.NoError(err)
+
+	output, err := ioutil.ReadFile(outFile)
+
+	// Assert
+	assert.NoError(err)
+	assert.Equal(`{"Foo":"bar","Bar":"baz"}`+"\n", string(output))
+}
