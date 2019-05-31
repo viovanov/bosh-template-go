@@ -296,3 +296,28 @@ func TestRenderWithLinkProperty(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal("toaster", string(output))
 }
+
+func TestWithNilContext(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	erbFile := filepath.Join(testDir(), "assets", "no_properties.yml.erb")
+	jobSpecFile := filepath.Join(testDir(), "assets", "no_properties_job.MF")
+
+	erbRenderer := NewERBRenderer(
+		&EvaluationContext{},
+		&InstanceInfo{},
+		jobSpecFile)
+	outDir, err := ioutil.TempDir("", "bosh-erb-render")
+	assert.NoError(err)
+	outFile := filepath.Join(outDir, "output")
+
+	// Act
+	err = erbRenderer.Render(erbFile, outFile)
+	assert.NoError(err)
+
+	output, err := ioutil.ReadFile(outFile)
+
+	// Assert
+	assert.NoError(err)
+	assert.Equal("no_properties\n", string(output))
+}

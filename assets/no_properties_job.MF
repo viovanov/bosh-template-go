@@ -1,0 +1,10 @@
+---
+name: no_properties
+packages:
+  - foopackage
+templates:
+  no_properties.yml.erb: no_properties.yml
+
+consumes:
+- name: barprovider
+  type: barprovider
