@@ -1,8 +1,8 @@
-require "erb"
-require "yaml"
-require "json"
 require "bosh/template"
+require "erb"
 require "fileutils"
+require "json"
+require "yaml"
 
 if $0 == __FILE__
   context_path, spec_path, instance_path, src_path, dst_path = *ARGV
