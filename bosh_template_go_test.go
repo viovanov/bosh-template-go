@@ -170,6 +170,7 @@ func TestRenderWithInstanceInfo(t *testing.T) {
 		&InstanceInfo{
 			AZ:         "myaz",
 			Address:    "foo.deadbeef.com",
+			Bootstrap:  true,
 			Deployment: "mydeployment",
 			ID:         "005443",
 			IP:         "256.256.256.256",
@@ -189,7 +190,7 @@ func TestRenderWithInstanceInfo(t *testing.T) {
 
 	// Assert
 	assert.NoError(err)
-	assert.Equal("foo.deadbeef.com myaz false mydeployment 005443 123 256.256.256.256 foo\n", string(output))
+	assert.Equal("foo.deadbeef.com myaz true mydeployment 005443 123 256.256.256.256 foo\n", string(output))
 }
 
 func TestRenderWithLinks(t *testing.T) {

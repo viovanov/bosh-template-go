@@ -35,6 +35,7 @@ type EvaluationContext struct {
 type InstanceInfo struct {
 	Address    string `yaml:"address"`
 	AZ         string `yaml:"az"`
+	Bootstrap  bool   `yaml:"bootstrap"`
 	Deployment string `yaml:"deployment"`
 	ID         string `yaml:"id"`
 	Index      int    `yaml:"index"`
