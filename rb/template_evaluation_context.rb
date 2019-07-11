@@ -42,10 +42,10 @@ if $0 == __FILE__
         instances << Bosh::Template::Test::InstanceSpec.new(
           address:   link_instance['address'],
           az:        link_instance['az'],
+          bootstrap: link_instance['bootstrap'],
           id:        link_instance['id'],
           index:     link_instance['index'],
           name:      link_instance['name'],
-          bootstrap: link_instance['index'] == '0',
         )
       end
       links << Bosh::Template::Test::Link.new(name: name, instances: instances, properties: link['properties'])
@@ -56,7 +56,7 @@ if $0 == __FILE__
   instance = Bosh::Template::Test::InstanceSpec.new(
     address:    instance_info['address'],
     az:         instance_info['az'],
-    bootstrap:  instance_info['index'] == '0',
+    bootstrap:  instance_info['bootstrap'],
     deployment: instance_info['deployment'],
     id:         instance_info['id'],
     index:      instance_info['index'],
