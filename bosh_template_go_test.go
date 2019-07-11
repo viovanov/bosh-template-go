@@ -127,7 +127,7 @@ func TestRenderOK(t *testing.T) {
 
 	// Assert
 	assert.NoError(err)
-	assert.Equal("bar", string(output))
+	assert.Equal("bar\n", string(output))
 }
 
 func TestRenderDefaultValueFromSpec(t *testing.T) {
@@ -154,7 +154,7 @@ func TestRenderDefaultValueFromSpec(t *testing.T) {
 
 	// Assert
 	assert.NoError(err)
-	assert.Equal("baz", string(output))
+	assert.Equal("baz\n", string(output))
 }
 
 func TestRenderWithInstanceInfo(t *testing.T) {
@@ -173,7 +173,7 @@ func TestRenderWithInstanceInfo(t *testing.T) {
 			Deployment: "mydeployment",
 			ID:         "005443",
 			IP:         "256.256.256.256",
-			Index:      "123",
+			Index:      123,
 			Name:       "foo",
 		},
 		jobSpecFile)
@@ -189,7 +189,7 @@ func TestRenderWithInstanceInfo(t *testing.T) {
 
 	// Assert
 	assert.NoError(err)
-	assert.Equal("123 foo.deadbeef.com myaz mydeployment 005443 256.256.256.256", string(output))
+	assert.Equal("foo.deadbeef.com myaz false mydeployment 005443 123 256.256.256.256 foo\n", string(output))
 }
 
 func TestRenderWithLinks(t *testing.T) {
@@ -209,7 +209,7 @@ func TestRenderWithLinks(t *testing.T) {
 									"address": "link.domain.foo",
 									"az":      "linkaz",
 									"id":      "11nk1d",
-									"index":   "11",
+									"index":   11,
 									"name":    "linkedjob",
 								},
 							},
@@ -224,7 +224,7 @@ func TestRenderWithLinks(t *testing.T) {
 			Deployment: "mydeployment",
 			ID:         "005443",
 			IP:         "256.256.256.256",
-			Index:      "123",
+			Index:      123,
 			Name:       "foo",
 		},
 		jobSpecFile)
@@ -260,7 +260,7 @@ func TestRenderWithLinkProperty(t *testing.T) {
 									"address": "link.domain.foo",
 									"az":      "linkaz",
 									"id":      "11nk1d",
-									"index":   "11",
+									"index":   11,
 									"name":    "linkedjob",
 								},
 							},
@@ -278,7 +278,7 @@ func TestRenderWithLinkProperty(t *testing.T) {
 			Deployment: "mydeployment",
 			ID:         "005443",
 			IP:         "256.256.256.256",
-			Index:      "123",
+			Index:      123,
 			Name:       "foo",
 		},
 		jobSpecFile)

@@ -37,7 +37,7 @@ type InstanceInfo struct {
 	AZ         string `yaml:"az"`
 	Deployment string `yaml:"deployment"`
 	ID         string `yaml:"id"`
-	Index      string `yaml:"index"`
+	Index      int    `yaml:"index"`
 	IP         string `yaml:"ip"`
 	Name       string `yaml:"name"`
 }
