@@ -48,7 +48,12 @@ if $0 == __FILE__
           name:      link_instance['name'],
         )
       end
-      links << Bosh::Template::Test::Link.new(name: name, instances: instances, properties: link['properties'])
+      links << Bosh::Template::Test::Link.new(
+        name: name,
+        address: link['address'],
+        instances: instances,
+        properties: link['properties'],
+      )
     end
   end
 
