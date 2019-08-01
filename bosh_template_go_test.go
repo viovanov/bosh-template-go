@@ -202,7 +202,7 @@ func TestRenderWithLinks(t *testing.T) {
 	erbRenderer := NewERBRenderer(
 		&EvaluationContext{
 			Properties: map[string]interface{}{
-				"bosh_containerization": map[string]interface{}{
+				"quarks": map[string]interface{}{
 					"consumes": map[string]interface{}{
 						"myprovider": map[string]interface{}{
 							"instances": []interface{}{
@@ -253,7 +253,7 @@ func TestRenderWithLinkProperty(t *testing.T) {
 	erbRenderer := NewERBRenderer(
 		&EvaluationContext{
 			Properties: map[string]interface{}{
-				"bosh_containerization": map[string]interface{}{
+				"quarks": map[string]interface{}{
 					"consumes": map[string]interface{}{
 						"myprovider": map[string]interface{}{
 							"instances": []interface{}{
