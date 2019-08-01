@@ -33,8 +33,8 @@ if $0 == __FILE__
 
   # Build links
   links = []
-  if context_hash['properties'] && context_hash['properties']['bosh_containerization'] && context_hash['properties']['bosh_containerization']['consumes']
-    context_hash['properties']['bosh_containerization']['consumes'].each_pair do |name, link|
+  if context_hash['properties'] && context_hash['properties']['quarks'] && context_hash['properties']['quarks']['consumes']
+    context_hash['properties']['quarks']['consumes'].each_pair do |name, link|
       next if link['instances'].empty?
 
       instances = []
