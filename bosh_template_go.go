@@ -17,6 +17,7 @@ const (
 	rbClassFileName               = "bosh_erb_renderer.rb"
 	evaluationContextYAMLFileName = "evaluation_context.yaml"
 	instanceInfoYAMLFileName      = "instance_info.yaml"
+	requiredVersion               = ">=2.2.1"
 )
 
 var (
@@ -143,12 +144,12 @@ func checkRubyAvailable() error {
 }
 
 func checkBOSHTemplateGemAvailable() error {
-	cmd := exec.Command(RubyGemBinary, "list", "-i", "bosh-template")
+	cmd := exec.Command(RubyGemBinary, "list", "-i", "bosh-template", "-v", requiredVersion)
 	outputBytes, err := cmd.CombinedOutput()
 
 	if err != nil {
 		output := string(outputBytes)
-		return errors.Wrapf(err, "rendering BOSH templates requires the bosh-template ruby gem, please install it: %s ", output)
+		return errors.Wrapf(err, "rendering BOSH templates requires the bosh-template(%s) ruby gem, please install it: %s ", requiredVersion, output)
 	}
 
 	return nil
