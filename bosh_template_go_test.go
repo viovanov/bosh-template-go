@@ -98,7 +98,7 @@ func TestNoGem(t *testing.T) {
 
 	// Assert
 	assert.Error(err)
-	assert.Contains(err.Error(), "rendering BOSH templates requires the bosh-template ruby gem")
+	assert.Contains(err.Error(), "rendering BOSH templates requires the bosh-template")
 }
 
 func TestRenderOK(t *testing.T) {
