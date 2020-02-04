@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 
 	rice "github.com/GeertJohan/go.rice"
@@ -71,7 +72,11 @@ func (e *ERBRenderer) Render(inputFilePath, outputFilePath string) (returnErr er
 	}
 
 	// Create a temporary work directory
-	tmpDir, err := ioutil.TempDir("", "bosh-erb-renderer")
+	tmpBaseDir := path.Join(string(filepath.Separator), "var", "vcap", "data", "bosh-template-go", "tmp")
+	if err := os.MkdirAll(tmpBaseDir, 0750); err != nil {
+		return err
+	}
+	tmpDir, err := ioutil.TempDir(tmpBaseDir, "bosh-erb-renderer")
 	if err != nil {
 		return errors.Wrap(err, "failed to create temporary directory in erb renderer")
 	}
