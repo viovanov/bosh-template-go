@@ -72,10 +72,9 @@ func TestNoRuby(t *testing.T) {
 	oldBinary := RubyBinary
 	RubyBinary = "thisbinaryshouldnotexistanywhere"
 	defer func() { RubyBinary = oldBinary }()
-	erbRenderer := NewERBRenderer(&EvaluationContext{}, &InstanceInfo{}, "foo")
 
 	// Act
-	err := erbRenderer.Render("foo", "deadbeef")
+	err := CheckRubyAvailable()
 
 	// Assert
 	assert.Error(err)
@@ -91,10 +90,9 @@ func TestNoGem(t *testing.T) {
 	oldBinary := RubyGemBinary
 	RubyGemBinary = "thisgembinaryshouldnotexistanywhere"
 	defer func() { RubyGemBinary = oldBinary }()
-	erbRenderer := NewERBRenderer(&EvaluationContext{}, &InstanceInfo{}, "foo")
 
 	// Act
-	err := erbRenderer.Render("foo", "deadbeef")
+	err := CheckBOSHTemplateGemAvailable()
 
 	// Assert
 	assert.Error(err)

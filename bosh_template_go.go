@@ -137,7 +137,7 @@ func CheckRubyAvailable() error {
 }
 
 // CheckBOSHTemplateGemAvailable can be used by callers to verify that the bosh template gem is correctly installed
-func checkBOSHTemplateGemAvailable() error {
+func CheckBOSHTemplateGemAvailable() error {
 	cmd := exec.Command(RubyGemBinary, "list", "-i", "bosh-template", "-v", requiredVersion)
 	outputBytes, err := cmd.CombinedOutput()
 
