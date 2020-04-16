@@ -62,14 +62,6 @@ func NewERBRenderer(evaluationContext *EvaluationContext, instanceInfo *Instance
 
 // Render renders an erb file using an EvaluationContext
 func (e *ERBRenderer) Render(inputFilePath, outputFilePath string) (returnErr error) {
-	// Check that dependencies are available
-	if err := checkRubyAvailable(); err != nil {
-		return err
-	}
-	if err := checkBOSHTemplateGemAvailable(); err != nil {
-		return err
-	}
-
 	// Create a temporary work directory
 	tmpDir, err := ioutil.TempDir("", "bosh-erb-renderer")
 	if err != nil {
@@ -135,7 +127,8 @@ func run(rubyClassFilePath, evaluationContextYAMLFilePath, jobSpecFilePath, inst
 	return nil
 }
 
-func checkRubyAvailable() error {
+// CheckRubyAvailable can be used by callers to verify that ruby is correctly installed
+func CheckRubyAvailable() error {
 	_, err := exec.LookPath(RubyBinary)
 	if err != nil {
 		return errors.Wrap(err, "rendering BOSH templates requires ruby, please install ruby and make sure it's in your PATH")
@@ -143,6 +136,7 @@ func checkRubyAvailable() error {
 	return nil
 }
 
+// CheckBOSHTemplateGemAvailable can be used by callers to verify that the bosh template gem is correctly installed
 func checkBOSHTemplateGemAvailable() error {
 	cmd := exec.Command(RubyGemBinary, "list", "-i", "bosh-template", "-v", requiredVersion)
 	outputBytes, err := cmd.CombinedOutput()
